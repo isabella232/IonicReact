@@ -1,0 +1,7 @@
+{
+  "name": "reactIonicFrontend",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
