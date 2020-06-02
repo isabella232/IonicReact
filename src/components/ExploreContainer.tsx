@@ -1,6 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import './ExploreContainer.css';
-import {IonList, IonItem, IonButton, IonPopover, IonInput, IonAvatar, IonLabel} from '@ionic/react';
+import {
+    IonList,
+    IonItem,
+    IonButton,
+    IonPopover,
+    IonInput,
+    IonAvatar,
+    IonLabel,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent, IonListHeader, IonFabButton, IonFab, IonFooter
+} from '@ionic/react';
 import {getData, postData} from "../Logic/Networking";
 
 interface ContainerProps {
@@ -24,11 +34,11 @@ const ExploreContainer: React.FC<ContainerProps> = ({ name }) => {
 
     useEffect(() => {
         getData('/api/users', setUsers);
-    }, []);
+    }, [!showPopover]);
 
     function submitNewUser() {
         let newUser = {
-            id: 1,
+            id: 1+users.length,
             name: username,
             password: password,
             icon: "",
@@ -38,22 +48,20 @@ const ExploreContainer: React.FC<ContainerProps> = ({ name }) => {
         postData('/api/user/create',newUser,null,users);
         console.log("new user submitted");
         setShowPopover(false);
+        setUsername("");
+        setPassword("");
     }
 
     function generateUsers() {
         if (users !== null && users !== undefined){
             return users.map((data,index) => {
-                return (
-                    <IonItem key={index}>
-                        <IonAvatar slot="start">
-                        </IonAvatar>
-                        <IonLabel>
-                            <h2>{data.name}</h2>
-                            <h3>{data.id}</h3>
-                            <p>{data.date}</p>
-                        </IonLabel>
-                    </IonItem>
-                );
+                return <IonItem key={index}>
+                    <IonLabel>
+                        <h2>{data.name}</h2>
+                        <h3>{data.id}</h3>
+                        <p>{data.date}</p>
+                    </IonLabel>
+                </IonItem>
             });
         } else {
             return null;
@@ -61,7 +69,7 @@ const ExploreContainer: React.FC<ContainerProps> = ({ name }) => {
     }
 
   return (
-    <div className="container">
+    <div>
         <IonPopover
             isOpen={showPopover}
             cssClass='my-custom-class'
@@ -80,10 +88,12 @@ const ExploreContainer: React.FC<ContainerProps> = ({ name }) => {
                 <IonButton onClick={submitNewUser}>Submit</IonButton>
             </IonList>
         </IonPopover>
-        <IonButton onClick={() => setShowPopover(true)}>New User</IonButton>
         <IonList>
             {generateUsers()}
         </IonList>
+        <IonFab>
+            <IonFabButton id="fabBtn" onClick={() => setShowPopover(true)}>+</IonFabButton>
+        </IonFab>
     </div>
   );
 };
