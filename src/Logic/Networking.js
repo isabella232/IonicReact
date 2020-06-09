@@ -8,17 +8,17 @@ export function getData(url, updateData = null){
             'Content-Type': 'application/json'
         },
     }).then(response => response.json()).then((data) => {
-        console.log('networking, getData: ' + JSON.stringify(data));
+        console.log('DATA FETCHED');
         if (updateData){
             updateData(data);
         }
         return data;
     }).catch((error) => {
-        console.error('networking, getData error is: ' + error.message + ' ' + error.toString());
+        console.error('networking, getData ERROR');
     });
 }
 
-export function postData(url, incomingData, dataFunction = null, array){
+export function postData(url, incomingData, dataFunction = null){
     fetch("https://us-central1-bakeoff-chat-app.cloudfunctions.net/app" + url, {
         mode: 'cors',
         method: 'POST',
@@ -28,15 +28,40 @@ export function postData(url, incomingData, dataFunction = null, array){
         },
         body: JSON.stringify(incomingData),
         redirect: 'follow'
-    }).then((response) => response.json()).then((data) =>{
-        console.log('new post: ' + JSON.stringify(data));
-        dataFunction(data, array);
+    }).then((response) => response.json()).then((data) => {
+        console.log('DATA POSTED');
+        if (dataFunction){
+            dataFunction();
+        }
     }).catch((error) => {
-        console.log('error: ' + error.message + ' ' + error.toString());
+        console.log('ERROR');
     });
 }
 
-export function deleteData(url, dataFunction = null, value = null){
+export function putData(url, incomingData, dataFunction){
+    fetch("https://us-central1-bakeoff-chat-app.cloudfunctions.net/app" + url, {
+        mode: 'cors',
+        method: 'PUT',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(incomingData),
+        redirect: 'follow'
+    }).then((response) => response.json()).then((data) => {
+        console.log('PUT DATA');
+        if (dataFunction){
+            dataFunction();
+        }
+    }).catch((error) => {
+        console.log('ERROR');
+        if (dataFunction){
+            dataFunction();
+        }
+    });
+}
+
+export function deleteData(url, dataFunction = null){
     fetch("https://us-central1-bakeoff-chat-app.cloudfunctions.net/app" + url, {
         mode: 'cors',
         method: 'delete',
@@ -46,9 +71,11 @@ export function deleteData(url, dataFunction = null, value = null){
             'Content-Type': 'application/json'
         },
     }).then(response => JSON.stringify(response)).then(response => {
-        console.log('deleteData response: ' + response);
-        dataFunction(value);
+        console.log('DELETED DATA');
+        if (dataFunction){
+            dataFunction(response);
+        }
     }).catch((error) => {
-        console.log('deleteData error: ' + error.message + ' ' + error.toString());
+        console.log('deleteData ERROR');
     });
 }
