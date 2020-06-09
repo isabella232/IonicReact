@@ -1,4 +1,5 @@
 import {
+  IonButton,
   IonContent,
   IonIcon,
   IonItem,
@@ -10,10 +11,17 @@ import {
   IonNote,
 } from '@ionic/react';
 
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { archiveOutline, archiveSharp, bookmarkOutline, heartOutline, heartSharp, mailOutline, mailSharp, paperPlaneOutline, paperPlaneSharp, trashOutline, trashSharp, warningOutline, warningSharp } from 'ionicons/icons';
+import React, {useEffect, useState} from 'react';
+import {useLocation} from 'react-router-dom';
+import {
+  archiveOutline,
+  archiveSharp,
+  bookmarkOutline,
+  newspaperOutline, newspaperSharp,
+  personOutline, personSharp
+} from 'ionicons/icons';
 import './Menu.css';
+import {getData} from "../Logic/Networking";
 
 interface AppPage {
   url: string;
@@ -24,78 +32,123 @@ interface AppPage {
 
 const appPages: AppPage[] = [
   {
-    title: 'Inbox',
-    url: '/page/Inbox',
-    iosIcon: mailOutline,
-    mdIcon: mailSharp
+    title: 'users',
+    url: '/page/users',
+    iosIcon: personOutline,
+    mdIcon: personSharp
   },
   {
-    title: 'Outbox',
-    url: '/page/Outbox',
-    iosIcon: paperPlaneOutline,
-    mdIcon: paperPlaneSharp
+    title: 'topics',
+    url: '/page/topics',
+    iosIcon: newspaperOutline,
+    mdIcon: newspaperSharp
   },
   {
-    title: 'Favorites',
-    url: '/page/Favorites',
-    iosIcon: heartOutline,
-    mdIcon: heartSharp
-  },
-  {
-    title: 'Archived',
-    url: '/page/Archived',
+    title: 'archived',
+    url: '/page/archived',
     iosIcon: archiveOutline,
     mdIcon: archiveSharp
-  },
-  {
-    title: 'Trash',
-    url: '/page/Trash',
-    iosIcon: trashOutline,
-    mdIcon: trashSharp
-  },
-  {
-    title: 'Spam',
-    url: '/page/Spam',
-    iosIcon: warningOutline,
-    mdIcon: warningSharp
   }
 ];
 
-const labels = ['Family', 'Friends', 'Notes', 'Work', 'Travel', 'Reminders'];
+interface ContainerProps {
+  isAuthed: boolean;
+  userToken: number;
+  userTokenCallback: (id: number) => void;
+  isAuthedCallback: (isAuthed: boolean) => void;
+  updateMenu: boolean;
+}
 
-const Menu: React.FC = () => {
+interface Topic {
+  id: number;
+  name: string;
+  favorites: Topic[];
+  date: Date;
+  description: string;
+  archived: boolean;
+}
+
+interface User {
+  id: number,
+  name: string,
+  password: string,
+  icon: string,
+  favorites: [],
+  date: Date,
+  archived: boolean;
+}
+
+const Menu: React.FC<ContainerProps> =
+    ({ isAuthed, userToken, userTokenCallback, isAuthedCallback, updateMenu }) => {
+  const [user, setUser] = useState<User>();
   const location = useLocation();
 
-  return (
-    <IonMenu contentId="main" type="overlay">
-      <IonContent>
-        <IonList id="inbox-list">
-          <IonListHeader>Inbox</IonListHeader>
-          <IonNote>hi@ionicframework.com</IonNote>
-          {appPages.map((appPage, index) => {
-            return (
-              <IonMenuToggle key={index} autoHide={false}>
-                <IonItem className={location.pathname === appPage.url ? 'selected' : ''} routerLink={appPage.url} routerDirection="none" lines="none" detail={false}>
-                  <IonIcon slot="start" icon={appPage.iosIcon} />
-                  <IonLabel>{appPage.title}</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-            );
-          })}
-        </IonList>
+  useEffect(() => {
+    getData('/api/user/' + userToken,setUser);
+  }, [isAuthed,userToken,updateMenu]);
 
-        <IonList id="labels-list">
-          <IonListHeader>Labels</IonListHeader>
-          {labels.map((label, index) => (
-            <IonItem lines="none" key={index}>
-              <IonIcon slot="start" icon={bookmarkOutline} />
-              <IonLabel>{label}</IonLabel>
-            </IonItem>
-          ))}
-        </IonList>
-      </IonContent>
-    </IonMenu>
-  );
+  function logout() {
+    userTokenCallback(0);
+    console.log("USER ZEROED");
+    isAuthedCallback(false);
+  }
+
+  if (isAuthed && user !== undefined && user !== null){
+    return (
+        <IonMenu contentId="main" type="overlay">
+          <IonContent>
+            <IonList id="inbox-list">
+              <IonListHeader>Modus Messenger</IonListHeader>
+              <IonNote>{user.name}</IonNote>
+              {appPages.map((appPage, index) => {
+                return (
+                    <IonMenuToggle key={index} autoHide={false}>
+                      <IonItem className={location.pathname === appPage.url ? 'selected' : ''} routerLink={appPage.url}
+                               routerDirection="none" lines="none" detail={false}>
+                        <IonIcon slot="start" icon={appPage.iosIcon} />
+                        <IonLabel>{appPage.title}</IonLabel>
+                      </IonItem>
+                    </IonMenuToggle>
+                );
+              })}
+            </IonList>
+            <IonList id="labels-list">
+              <IonListHeader>Favorites</IonListHeader>
+              {user.favorites.map((topic: Topic, index: number) => (
+                  <IonItem lines="none" key={index} routerLink={"/page/Messages/"+topic.id}
+                           className={location.pathname === "/page/Messages/"+topic.id ? 'selected' : ''}
+                           routerDirection="none" detail={false}>
+                    <IonIcon slot="start" icon={bookmarkOutline} />
+                    <IonLabel>{topic.name}</IonLabel>
+                  </IonItem>
+              ))}
+            </IonList>
+            <IonButton id="logoutBtn" color="secondary" onClick={() => logout()}>Logout</IonButton>
+          </IonContent>
+        </IonMenu>
+    );
+  } else {
+    return (
+        <IonMenu contentId="main" type="overlay">
+          <IonContent>
+            <IonList id="inbox-list">
+              <IonListHeader>Modus Messenger</IonListHeader>
+              <IonNote>Please Login</IonNote>
+              {
+                <IonMenuToggle autoHide={false}>
+                  <IonItem className={location.pathname === appPages[0].url ? 'selected' : ''}
+                           routerLink={appPages[0].url}
+                           routerDirection="none" lines="none" detail={false}>
+                    <IonIcon slot="start" icon={appPages[0].iosIcon} />
+                    <IonLabel>{appPages[0].title}</IonLabel>
+                  </IonItem>
+                </IonMenuToggle>
+              }
+            </IonList>
+          </IonContent>
+        </IonMenu>
+    );
+  }
 };
 
 export default Menu;
